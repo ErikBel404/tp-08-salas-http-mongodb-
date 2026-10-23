@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const { Reserva } = require("../modelos/reserva");
+const { Reserva } = require("./../modelos/reservas");
 
 function representarReserva(documento) {
   return {
@@ -68,3 +68,5 @@ function crearServicioReservasMongo() {
 }
 
 module.exports = { crearServicioReservasMongo };
+
+

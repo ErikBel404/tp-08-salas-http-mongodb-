@@ -1,59 +1,57 @@
-const { crearServicioReservas } = require("./servicios/reservas");
+const { leerConfiguracion } = require("./config/entorno");
+const { conectarBaseDatos, desconectarBaseDatos, } = require("./config/base-datos");
+
+const { crearServicioReservasMongo } = require("./servicios/reservas-mongo");
 
 const { crearApp } = require("./app");
 
-const { leerConfiguracion } = require("./config/entorno");
+async function main() {
+   const { puerto, formatoRegistro } = leerConfiguracion();
 
-// Datos iniciales
-const reservas = [
-  {
-    id: 1,
-    estudiante: "Ana García",
-    email: "ana.garcia@example.com",
-    sala: "Sala Norte",
-    fecha: "2026-04-10",
-    turno: "Mañana",
-    personas: 3,
-  },
-  {
-    id: 2,
-    estudiante: "Carlos Gómez",
-    email: "carlos.gomez@example.com",
-    sala: "Sala Sur",
-    fecha: "2026-04-10",
-    turno: "Tarde",
-    personas: 2,
-  },
-  {
-    id: 3,
-    estudiante: "Lucía Fernández",
-    email: "lucia.f@example.com",
-    sala: "Sala Multimedia",
-    fecha: "2026-04-11",
-    turno: "Noche",
-    personas: 5,
-  },
-  {
-    id: 4,
-    estudiante: "Martín Rodríguez",
-    email: "martin.r@example.com",
-    sala: "Sala Norte",
-    fecha: "2026-04-12",
-    turno: "Tarde",
-    personas: 4,
-  },
-];
+   await conectarBaseDatos();
 
-function main() {
-  const { puerto, formatoRegistro } = leerConfiguracion();
+   const serviciosReservas = crearServicioReservasMongo();
+   const app = crearApp({ serviciosReservas, formatoRegistro });
 
-  const serviciosReservas = crearServicioReservas(reservas);
+   const servidor = app.listen(puerto, () => {
+      console.log(`Aplicación disponible en http://localhost:${puerto}`);
+   });
 
-  const app = crearApp({ serviciosReservas, formatoRegistro });
+   let cerrando = false;
+   
+   function cerrar() {
+      if (cerrando) return;
+      cerrando = true;
 
-  app.listen(puerto, () => {
-    console.log(`Aplicación disponible en http://localhost:${puerto}`);
-  });
+      servidor.close(async () => {
+         try {
+            await desconectarBaseDatos();
+         } catch (error) {
+            console.error("Error al cerrar:", error.name);
+            process.exitCode = 1;
+         }
+      });
+   }
+
+   process.once("SIGINT", cerrar);
+   process.once("SIGTERM", cerrar);
+
+   servidor.on("error", (error) => {
+      console.error("No se pudo escuchar el puerto:", error.code);
+      process.exitCode = 1;
+      desconectarBaseDatos().catch((fallo) => {
+         console.error("Error al cerrar:", fallo.name);
+      });
+   });
 }
 
-main();
+main().catch(async (error) => {
+   console.error("No se pudo iniciar la aplicación:", error.name);
+   console.error("Revisar entorno, DNS, red, acceso de Atlas y puerto.");
+   process.exitCode = 1;
+   try {
+      await desconectarBaseDatos();
+   } catch (fallo) {
+      console.error("Error al cerrar:", fallo.name);
+   }
+});

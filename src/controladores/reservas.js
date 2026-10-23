@@ -4,10 +4,11 @@ const {
 } = require("./../../datos/constantes");
 
 function crearControladorReservas(servicioReserva) {
-  function listar(req, res) {
+  async function listar(req, res) {
+    const reservas = await servicioReserva.listar();
     res.render("reservas/lista", {
-      titulo: "reservas artesanales",
-      reservas: servicioReserva.listar(),
+      titulo: "Reservas de salas",
+      reservas,
     });
   }
 
@@ -21,9 +22,8 @@ function crearControladorReservas(servicioReserva) {
     });
   }
 
-  function mostrarDetalle(req, res) {
-    const id = Number(req.params.id);
-    const reserva = servicioReserva.obtenerPorId(id);
+  async function mostrarDetalle(req, res) {
+    const reserva = await servicioReserva.obtenerPorId(req.params.id);
 
     if (!reserva) {
       return res.status(404).render("no-encontrado", {
@@ -31,27 +31,49 @@ function crearControladorReservas(servicioReserva) {
         mensaje: "No existe una reserva con ese identificador.",
       });
     }
+
     res.render("reservas/detalle", {
-      titulo: reserva.nombre,
+      titulo: `Reserva de ${reserva.estudiante}`,
       reserva,
     });
   }
 
-  function crear(req, res) {
-    servicioReserva.crear(req.reservaValidada);
+  async function crear(req, res) {
+    await servicioReserva.crear(req.reservaValidada);
     res.redirect("/reservas");
   }
 
-  function listarApi(req, res) {
-    res.json({
-      servicio: "activo",
-      reservas: servicioReserva.contar(),
-      solicitudId: res.locals.solicitudId,
-      lista: servicioReserva.listar(),
-    });
+  // --- Endpoints para la API JSON ---
+
+  async function listarApi(req, res) {
+    const reservas = await servicioReserva.listar(req.query.sala);
+    res.json(reservas);
   }
 
-  return { listar, mostrarFormulario, mostrarDetalle, crear, listarApi };
+  async function obtenerApi(req, res) {
+    const reserva = await servicioReserva.obtenerPorId(req.params.id);
+
+    if (!reserva) {
+      return res.status(404).json({ error: "Reserva no encontrada." });
+    }
+
+    res.json(reserva);
+  }
+
+  async function crearApi(req, res) {
+    const reserva = await servicioReserva.crear(req.reservaValidada);
+    res.location(`/api/reservas/${reserva.id}`).status(201).json(reserva);
+  }
+
+  return {
+    listar,
+    mostrarFormulario,
+    mostrarDetalle,
+    crear,
+    listarApi,
+    obtenerApi,
+    crearApi,
+  };
 }
 
 module.exports = { crearControladorReservas };
