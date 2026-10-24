@@ -1,5 +1,5 @@
 {
-   "name": "tp-07-salas-mongodb",
+   "name": "tp-08-salas-mongodb",
    "version": "1.0.0",
    "description": "",
    "main": "index.js",
@@ -17,14 +17,14 @@
    },
    "repository": {
       "type": "git",
-      "url": "https://github.com/ErikBel404/tp-07-salas-mongodb-.git"
+      "url": "https://github.com/ErikBel404/tp-08-salas-http-mongodb-.git"
    },
    "keywords": [],
    "type": "commonjs",
    "bugs": {
-      "url": "https://github.com/ErikBel404/tp-07-salas-mongodb-.git/issues"
+      "url": "https://github.com/ErikBel404/tp-08-salas-http-mongodb-.git/issues"
    },
-   "homepage": "https://github.com/ErikBel404/tp-07-salas-mongodb-.git#readme",
+   "homepage": "https://github.com/ErikBel404/tp-08-salas-http-mongodb-.git#readme",
    "dependencies": {
       "ejs": "^6.0.1",
       "express": "^5.2.1",
